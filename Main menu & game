@@ -1,4 +1,3 @@
-
 import ChessEngine as ce
 import RegistWindow
 import chess as ch
