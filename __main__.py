@@ -1,4 +1,293 @@
-# See http://cens.ioc.ee/projects/f2py2e/
-from numpy.f2py.f2py2e import main
 
-main()
+import ChessEngine as ce
+import RegistWindow
+import chess as ch
+import tkinter as tk
+from tkinter import font
+from RegistWindow import *
+import  os
+
+class Main:
+    def __init__(self, board=ch.Board, depth_lvl=1, root = tk.Tk):
+        board1 = str(board).replace(' ', '').split()
+        self.play = ""
+        self.board2 = [[board1[j][i] for i in range(8)] for j in range(8)]
+        self.board = board
+        self.board_new_game = board
+        self.col1 = {0: 'a', 1: 'b', 2: 'c', 3: 'd', 4: 'e', 5: 'f', 6: 'g', 7: 'h'}
+        self.current_piece = ((None, None), None)
+        self.pieces = {'p': '♟', 'P': '♙', 'r': '♜', 'R': '♖', 'k': '♚', 'K': '♔', 'q': '♛', 'Q': '♕','n':'♞','N':'♘','b':'♝','B':'♗'}
+        self.DepthLvl = depth_lvl
+
+
+
+    def draw_board(self, root, c_pc = "", a1 = "normal"):
+        button = [[None for _ in range(8)] for _ in range(8)]
+        newl = [str(e) for e in list(self.board.legal_moves)]
+        newl1 = []
+        if c_pc != "":
+            for i in range(len(newl)):
+                if c_pc in newl[i][0:2]:
+                    newl1.append(newl[i][2:4])
+            print(c_pc)
+            print(newl)
+            print(newl1)
+        a = 'gray100'
+
+
+        for row in range(8):
+            for col in range(8):
+                if "{c}{r}".format(c=self.col1[col], r=str(7 - row + 1)) in newl1:
+                    a = 'green'
+                elif ((col + row) % 2) == 0:
+                    a='gray100'
+                else:
+                    a = 'gray30'
+
+                if ((col + row) % 2) == 0:
+                    if self.board2[row][col] == '.':
+                        button_font = font.Font(size=30)
+                        button = tk.Button(root,state=[a1], text=' ', width=5, height=2,
+                                           command=lambda r=row, c=col: self.playHumanMove(r, c), bg=a,
+                                           font=font.Font(size=20))
+                        button.grid(row=row, column=col)
+
+                    else:
+                        button_font = font.Font(size=30)
+                        button = tk.Button(root,state=[a1], text=self.pieces[self.board2[row][col]], width=5, height=2,
+                                           command=lambda r=row, c=col: self.playHumanMove(r, c), bg=a,
+                                           font=font.Font(size=20))
+                        button.grid(row=row, column=col)
+
+                else:
+                    if self.board2[row][col] == '.':
+                        button_font = font.Font(size=30)
+                        button = tk.Button(root,state=[a1], text=' ', width=5, height=2,
+                                           command=lambda r=row, c=col: self.playHumanMove(r, c), bg=a,
+                                           font=font.Font(size=20))
+                        button.grid(row=row, column=col)
+
+                    else:
+                        button_font = font.Font(size=30)
+                        button = tk.Button(root,state=[a1], text=self.pieces[self.board2[row][col]], width=5, height=2,
+                                           command=lambda r=row, c=col: self.playHumanMove(r, c), bg=a,
+                                           font=font.Font(size=20))
+                        button.grid(row=row, column=col)
+
+
+
+    def Move(self, row, col):
+        print(list(board.legal_moves))
+
+        try:
+
+            if self.board2[row][col] != '.':
+                if self.board2[row][col].isupper():
+                    self.current_piece = (row, col, self.board2[row][col])
+
+                    self.draw_board(root, "{a}{b}".format(a=self.col1[self.current_piece[1]], b=8 - self.current_piece[0]))
+                    print("{a}{b}".format(a=self.col1[self.current_piece[1]], b=8 - self.current_piece[0]))
+
+                elif self.current_piece != ((None, None), None) and self.board2[row][col].islower():
+                    print(self.current_piece)
+                    p = "{a}{b}".format(a=self.col1[self.current_piece[1]], b=8 - self.current_piece[0]) + "{c}{r}".format(
+                    c=self.col1[col],
+                    r=str(7 - row + 1))
+                    print(self.board)
+                    print(p)
+                    self.board.push_san(p)
+                    self.playEngineMove(3, ch.BLACK, col, row)
+                    board1 = str(self.board).replace(' ', '').split()
+                    self.board2 = [[board1[j][i] for i in range(8)] for j in range(8)]
+                    print(self.board)
+                    self.draw_board(root)
+
+                else:
+                    self.current_piece = (row, col, self.board2[row][col])
+
+            else:
+                if self.current_piece != ((None, None), None):
+
+                    p = "{a}{b}".format(a=self.col1[self.current_piece[1]],
+                                b=str(8 - int(self.current_piece[0]))) + "{c}{r}".format(c=self.col1[col],
+                                                                                         r=str(7 - row + 1))
+                    newl = [str(e) for e in list(self.board.legal_moves)]
+                    if self.current_piece[2] == 'P' and row==0:
+                        p = "{a}{b}".format(a=self.col1[self.current_piece[1]],
+                                    b=str(8 - int(self.current_piece[0]))) + "{c}{r}".format(c=self.col1[col],
+                                                                                             r=str(7 - row + 1)) + 'q'
+
+                    print(newl)
+                    self.board.push_san(p)
+                    self.playEngineMove(3, ch.BLACK, col, row)
+                    board1 = str(self.board).replace(' ', '').split()
+                    self.board2 = [[board1[j][i] for i in range(8)] for j in range(8)]
+                    print(self.board)
+
+                    self.draw_board(root,
+                                    "{a}{b}".format(a=self.col1[self.current_piece[1]], b=8 - self.current_piece[0]))
+        except:
+            if self.board2[row][col] != '.':
+                if self.current_piece != ((None, None), None):
+                    self.current_piece = ((None, None), None)
+                else:
+                    self.draw_board(root)
+                    print("Введен неверный ход")
+
+    def playHumanMove(self, row, col):
+        if self.board.is_checkmate() or len(list(board.legal_moves))==0:
+            root.destroy()
+
+            def playagain():
+                root11.destroy()
+                hard()
+
+            def playagain1():
+                root11.destroy()
+
+            root11 = tk.Tk()
+            root11.title("Шах и мат!")
+            root11.resizable(False, False)
+            root11.geometry("300x200")
+            label = tk.Label(root11, text="Вы проиграли!", font=("Arial", 12), pady=20)
+            label.pack()
+            but = tk.Button(root11, text="Начать новую игру", command=playagain)
+            but.pack()
+            but1 = tk.Button(root11, text="Закончить сеанс", command=playagain1)
+            but1.pack()
+            root11.mainloop()
+
+        elif self.board.is_insufficient_material():
+            root.destroy()
+
+            def playagain():
+                root11.destroy()
+                hard()
+
+            def playagain1():
+                root11.destroy()
+
+            root11 = tk.Tk()
+            root11.title("Ничья")
+            root11.geometry("300x200")
+            root11.resizable(False, False)
+            label = tk.Label(root11, text="Ничья!", font=("Arial", 12), pady=20)
+            label.pack()
+            but = tk.Button(root11, text="Начать новую игру", command=playagain)
+            but.pack()
+            but1 = tk.Button(root11, text="Закончить сеанс", command=playagain1)
+            but1.pack()
+            root11.mainloop()
+        elif self.board.is_stalemate():
+            root.destroy()
+
+            def playagain():
+                root11.destroy()
+                hard()
+
+            def playagain1():
+                root11.destroy()
+
+            root11 = tk.Tk()
+            root11.title("Пат!!!")
+            root11.geometry("300x200")
+            label = tk.Label(root11, text="Пат!!!", font=("Arial", 12), pady=20)
+            label.pack()
+            but = tk.Button(root11, text="Начать новую игру", command=playagain)
+            but.pack()
+            but1 = tk.Button(root11, text="Закончить сеанс", command=playagain1)
+            but1.pack()
+            root11.mainloop()
+        else:
+            self.Move(row, col)
+
+    def playEngineMove(self, maxDepth, color,col,row):
+
+        try:
+            engine = ce.Engine(self.board, color, maxDepth)
+            a = engine.getBestMove()
+            self.board.push(a)
+            print(a)
+            print(self.play)
+
+        except:
+            root.destroy()
+
+            def playagain():
+                root11.destroy()
+                hard()
+
+            def playagain1():
+                root11.destroy()
+
+            root11 = tk.Tk()
+            root11.title("Шах и мат!")
+            root11.geometry("300x200")
+            label = tk.Label(root11, text="Вы победили!", font=("Arial", 12), pady=20)
+            label.pack()
+            but = tk.Button(root11, text="Начать новую игру", command=playagain)
+            but.pack()
+            but1 = tk.Button(root11, text="Закончить сеанс", command=playagain1)
+            but1.pack()
+            root11.mainloop()
+def play(pieces , rut):
+    global root, board
+    rut.destroy()
+    root = tk.Tk()
+    root.resizable(False, False)
+    board = ch.Board()
+    board.set_fen(pieces)
+    game = Main(board)
+    game.draw_board(root)
+
+
+def hard():
+    root12 = tk.Tk()
+    root12.title("Меню")
+    root12.geometry("300x200")
+    root12.resizable(False, False)
+    root12.configure(bg="black")
+    label = tk.Label(root12, text="Выберите режим игры", foreground="white",background="black",pady=10)
+    label.pack()
+    button_register_login = tk.Button(root12, text="Полноценные шахматы", command=lambda: play('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', root12))
+    button_play_without_registration = tk.Button(root12, text="Король,ладья,пешка - король,ферзь",
+                                                 command=lambda :play('3k4/1P6/3q4/8/3R4/8/5K2/8 w - - 0 1',root12))
+    button_register_login.pack(padx=50, pady=10)
+    button_play_without_registration.pack(padx=50, pady=20)
+
+def register_login():
+    root1.destroy()
+
+    if os.path.isfile("usersааа1.txt"):
+        registration_window = RegistrationWindow("usersааа1.txt")
+    else:
+        myfile = open("usersааа1.txt", "x")
+        registration_window = RegistrationWindow("usersааа1.txt")
+    registration_window.run()
+    print(registration_window.accesf())
+    if(registration_window.accesf()):
+        hard()
+
+def play_without_reg():
+    root1.destroy()
+    hard()
+
+# Создание главного окна
+root1 = tk.Tk()
+root1.title("Меню")
+root1.resizable(False, False)
+root1.configure(bg="black")
+root1.geometry("300x200")
+
+# Создание кнопок
+button_register_login = tk.Button(root1, text="Зарегистрироваться/войти", command=register_login)
+button_play_without_registration = tk.Button(root1, text="Играть без регистрации", command=play_without_reg)
+
+
+# Размещение кнопок на окне
+button_register_login.pack(fill="both", padx=50, pady=40)
+button_play_without_registration.pack(fill="both", padx=50)
+
+
+# Запуск главного цикла
+root1.mainloop()
